@@ -3,12 +3,14 @@ import { useAuth } from '../../hooks/useAuth';
 import { useSpeechToText } from '../../hooks/useSpeechToText';
 import { createEntry } from '../../services/api';
 import { MicButton } from './MicButton';
+import { ChatPopup } from '../Chat/ChatPopup';
 
 export function WriteTab() {
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedEntry, setSavedEntry] = useState(null);
+  const [showChat, setShowChat] = useState(false);
 
   const {
     isListening,
@@ -49,14 +51,18 @@ export function WriteTab() {
     try {
       const entry = await createEntry(user.id, content);
       setSavedEntry(entry);
-      // TODO: Open chat popup with entry
       setContent('');
-      alert('Entry saved! Chat functionality coming in Phase 5.');
+      setShowChat(true);
     } catch (err) {
       alert('Failed to save entry: ' + err.message);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleChatClose = () => {
+    setShowChat(false);
+    setSavedEntry(null);
   };
 
   // Display content with interim transcript preview
@@ -160,6 +166,14 @@ export function WriteTab() {
           Tip: Click the microphone button to dictate your entry
         </p>
       )}
+
+      {/* Chat Popup */}
+      <ChatPopup
+        isOpen={showChat}
+        onClose={handleChatClose}
+        entry={savedEntry}
+        userId={user?.id}
+      />
     </div>
   );
 }
