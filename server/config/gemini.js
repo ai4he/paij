@@ -19,5 +19,5 @@ export function getGeminiClient() {
 
 export function getModel() {
   const client = getGeminiClient();
-  return client.getGenerativeModel({ model: 'gemini-2.5-pro-preview-05-06' });
+  return client.getGenerativeModel({ model: 'gemini-2.5-pro' });
 }
