@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
 // TODO: Customize the default system prompt for baseline condition
 export const DEFAULT_SYSTEM_PROMPT = `You are a reflective chatbot. The user will provide you with their journal entries, and your goal is to improve the depth of their reflection. On your third output, the conversation will end.`;
@@ -19,5 +19,31 @@ export function getGeminiClient() {
 
 export function getModel() {
   const client = getGeminiClient();
-  return client.getGenerativeModel({ model: 'gemini-2.5-pro' });
+  return client.getGenerativeModel({
+    model: 'gemini-2.5-pro',
+    generationConfig: {
+      temperature: 1,
+      thinkingConfig: {
+        thinkingBudget: 1024,
+      },
+    },
+    safetySettings: [
+      {
+        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+    ],
+  });
 }
