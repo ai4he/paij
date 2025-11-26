@@ -13,6 +13,12 @@ export const sendMessage = async (req, res) => {
     const user = db.prepare('SELECT system_prompt FROM users WHERE id = ?').get(userId);
     const systemPrompt = user?.system_prompt || DEFAULT_SYSTEM_PROMPT;
 
+    console.log('--- Chat Debug ---');
+    console.log('User ID:', userId);
+    console.log('User from DB:', user);
+    console.log('System Prompt being passed to getModel:', systemPrompt);
+    console.log('------------------');
+
     // Get the Gemini model configured with user's system prompt
     const model = getModel(systemPrompt);
 
