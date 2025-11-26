@@ -201,7 +201,9 @@ CREATE TABLE conversations (
 - Features:
   - Auto-starts with journal entry as first message
   - Tracks LLM response count (max 3)
-  - Auto-closes and saves after 3rd LLM response
+  - After 3rd LLM response, input is disabled but chat remains open
+  - User can review conversation and manually close when ready
+  - Conversation saved when user closes the popup
   - Loading states during API calls
   - Configurable system prompt per user
 
@@ -303,8 +305,9 @@ CREATE TABLE conversations (
 5. Create ChatMessage component
 6. Implement useChat hook for conversation state
 7. Add response counter logic (max 3)
-8. Implement auto-close and save behavior
-9. Store conversations in database
+8. Disable input after 3rd response, allow user to review chat
+9. Add manual close button to save and exit
+10. Store conversations in database
 
 ### Phase 6: History Tab
 1. Create HistoryTab container component

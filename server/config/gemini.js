@@ -18,10 +18,6 @@ export function getGeminiClient() {
 }
 
 export function getModel(systemPrompt) {
-  console.log('--- getModel Debug ---');
-  console.log('systemPrompt received:', systemPrompt);
-  console.log('----------------------');
-
   const client = getGeminiClient();
   return client.getGenerativeModel({
     model: 'gemini-2.5-pro',

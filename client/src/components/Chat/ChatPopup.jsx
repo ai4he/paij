@@ -41,29 +41,22 @@ export function ChatPopup({ isOpen, onClose, entry, userId }) {
     }
   }, [isLoading, isComplete]);
 
-  // Auto-save and close when conversation is complete
-  useEffect(() => {
-    if (isComplete && messages.length > 0 && !isSaving) {
-      handleSaveAndClose();
-    }
-  }, [isComplete]);
-
   const handleSaveAndClose = async () => {
+    if (messages.length === 0) {
+      reset();
+      onClose();
+      return;
+    }
+
     setIsSaving(true);
     try {
       await api.saveConversation(entry.id, userId, messages);
-      // Wait a moment to show the "saving" message
-      setTimeout(() => {
-        reset();
-        onClose();
-      }, 1500);
     } catch (err) {
       console.error('Failed to save conversation:', err);
-      // Still close even if save fails
-      setTimeout(() => {
-        reset();
-        onClose();
-      }, 1500);
+    } finally {
+      setIsSaving(false);
+      reset();
+      onClose();
     }
   };
 
@@ -75,17 +68,12 @@ export function ChatPopup({ isOpen, onClose, entry, userId }) {
     setInput('');
   };
 
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
-
   return (
     <Modal
       isOpen={isOpen}
-      onClose={!isComplete && !isSaving ? handleClose : undefined}
+      onClose={!isSaving ? handleSaveAndClose : undefined}
       title="Reflect on Your Entry"
-      showClose={!isComplete && !isSaving}
+      showClose={!isSaving}
     >
       <div className="flex h-[60vh] flex-col">
         {/* Messages area */}
@@ -107,12 +95,12 @@ export function ChatPopup({ isOpen, onClose, entry, userId }) {
           )}
 
           {isComplete && (
-            <div className="rounded-md bg-green-50 p-4 text-center">
-              <p className="text-sm font-medium text-green-800">
+            <div className="rounded-md bg-blue-50 p-4 text-center">
+              <p className="text-sm font-medium text-blue-800">
                 The conversation has ended.
               </p>
-              <p className="mt-1 text-sm text-green-600">
-                {isSaving ? 'Saving conversation...' : 'Conversation saved!'}
+              <p className="mt-1 text-sm text-blue-600">
+                Take a moment to review, then close when ready.
               </p>
             </div>
           )}
@@ -147,9 +135,13 @@ export function ChatPopup({ isOpen, onClose, entry, userId }) {
               </p>
             </>
           ) : (
-            <p className="text-center text-sm text-gray-500">
-              Returning to journal...
-            </p>
+            <button
+              onClick={handleSaveAndClose}
+              disabled={isSaving}
+              className="w-full rounded-lg bg-primary-600 py-3 font-medium text-white transition-colors hover:bg-primary-700 disabled:bg-gray-300"
+            >
+              {isSaving ? 'Saving...' : 'Close & Save Conversation'}
+            </button>
           )}
         </div>
       </div>
