@@ -1,12 +1,19 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { Header } from './components/Layout/Header';
 import { LoginScreen } from './components/Auth/LoginScreen';
 import { WriteTab } from './components/Write/WriteTab';
 import { HistoryTab } from './components/History/HistoryTab';
+import { AdminPanel } from './components/Admin/AdminPanel';
 
 function App() {
   const { user, loading } = useAuth();
+  const location = useLocation();
+
+  // Admin route is accessible without user authentication
+  if (location.pathname === '/admin') {
+    return <AdminPanel />;
+  }
 
   if (loading) {
     return (

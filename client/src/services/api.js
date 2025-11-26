@@ -54,3 +54,14 @@ export const sendMessage = (userId, messages) => request('/chat/message', {
   method: 'POST',
   body: JSON.stringify({ userId, messages }),
 });
+
+// Admin
+export const getAdminUsers = (adminKey) => request('/admin/users', {
+  headers: { 'X-Admin-Key': adminKey },
+});
+
+export const updatePrompts = (adminKey, userIds, systemPrompt) => request('/admin/prompts', {
+  method: 'PUT',
+  headers: { 'X-Admin-Key': adminKey },
+  body: JSON.stringify({ userIds, systemPrompt }),
+});
