@@ -1,0 +1,25 @@
+{
+  "name": "paij",
+  "version": "1.0.0",
+  "description": "AI-Assisted Journaling Webapp for research study",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "client": "npm run dev --workspace=client",
+    "server": "npm run dev --workspace=server",
+    "build": "npm run build --workspace=client",
+    "lint": "npm run lint --workspace=client && npm run lint --workspace=server",
+    "format": "prettier --write \"**/*.{js,jsx,json,css,md}\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.2.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
