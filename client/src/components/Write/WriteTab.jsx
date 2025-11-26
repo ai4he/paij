@@ -1,11 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useSpeechToText } from '../../hooks/useSpeechToText';
 import { createEntry } from '../../services/api';
+import { MicButton } from './MicButton';
 
 export function WriteTab() {
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
+  const [savedEntry, setSavedEntry] = useState(null);
+
+  const {
+    isListening,
+    transcript,
+    interimTranscript,
+    isSupported,
+    toggleListening,
+    resetTranscript,
+  } = useSpeechToText();
+
+  // Append transcript to content when speech is captured
+  useEffect(() => {
+    if (transcript) {
+      setContent((prev) => {
+        const separator = prev && !prev.endsWith(' ') ? ' ' : '';
+        return prev + separator + transcript;
+      });
+      resetTranscript();
+    }
+  }, [transcript, resetTranscript]);
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -17,12 +40,18 @@ export function WriteTab() {
   const handleSave = async () => {
     if (!content.trim()) return;
 
+    // Stop listening if recording
+    if (isListening) {
+      toggleListening();
+    }
+
     setSaving(true);
     try {
-      await createEntry(user.id, content);
-      // TODO: Open chat popup
+      const entry = await createEntry(user.id, content);
+      setSavedEntry(entry);
+      // TODO: Open chat popup with entry
       setContent('');
-      alert('Entry saved! Chat functionality coming soon.');
+      alert('Entry saved! Chat functionality coming in Phase 5.');
     } catch (err) {
       alert('Failed to save entry: ' + err.message);
     } finally {
@@ -30,8 +59,16 @@ export function WriteTab() {
     }
   };
 
+  // Display content with interim transcript preview
+  const displayContent = content + (interimTranscript ? (content && !content.endsWith(' ') ? ' ' : '') + interimTranscript : '');
+
+  // Character count
+  const charCount = content.length;
+  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+
   return (
     <div className="space-y-6">
+      {/* Date Header */}
       <div className="text-center">
         <h2 className="text-2xl font-semibold text-gray-900">{today}</h2>
         <p className="mt-2 text-gray-600">
@@ -40,41 +77,89 @@ export function WriteTab() {
         </p>
       </div>
 
+      {/* Journal Entry Area */}
       <div className="relative">
         <textarea
-          value={content}
+          value={displayContent}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Start writing your journal entry..."
-          className="min-h-[200px] w-full rounded-lg border border-gray-300 p-4 text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 resize-y"
+          className={`min-h-[250px] w-full rounded-lg border p-4 pb-16 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 resize-y transition-colors ${
+            isListening
+              ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+              : 'border-gray-300 focus:border-primary-500 focus:ring-primary-200'
+          }`}
           disabled={saving}
         />
-        <button
-          type="button"
-          className="absolute bottom-4 right-4 rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 transition-colors"
-          title="Speech to text (coming soon)"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"
-              clipRule="evenodd"
+
+        {/* Bottom toolbar */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+          {/* Character/word count */}
+          <div className="text-xs text-gray-400">
+            {wordCount} {wordCount === 1 ? 'word' : 'words'} · {charCount} chars
+          </div>
+
+          {/* Recording indicator + mic button */}
+          <div className="flex items-center gap-2">
+            {isListening && (
+              <span className="flex items-center gap-1 text-xs text-red-500">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-red-500"></span>
+                Recording...
+              </span>
+            )}
+            <MicButton
+              isListening={isListening}
+              isSupported={isSupported}
+              onClick={toggleListening}
+              disabled={saving}
             />
-          </svg>
-        </button>
+          </div>
+        </div>
       </div>
 
+      {/* Interim transcript preview */}
+      {interimTranscript && (
+        <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-500 italic">
+          Hearing: &ldquo;{interimTranscript}&rdquo;
+        </div>
+      )}
+
+      {/* Save Button */}
       <button
         onClick={handleSave}
         disabled={!content.trim() || saving}
-        className="w-full rounded-lg bg-primary-600 py-3 font-medium text-white hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+        className="w-full rounded-lg bg-primary-600 py-3 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {saving ? 'Saving...' : 'Save Entry'}
+        {saving ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            Saving...
+          </span>
+        ) : (
+          'Save Entry'
+        )}
       </button>
+
+      {/* Speech-to-text hint */}
+      {isSupported && !content && (
+        <p className="text-center text-sm text-gray-400">
+          Tip: Click the microphone button to dictate your entry
+        </p>
+      )}
     </div>
   );
 }
