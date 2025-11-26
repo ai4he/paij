@@ -17,10 +17,13 @@ export function getGeminiClient() {
   return genAI;
 }
 
-export function getModel() {
+export function getModel(systemPrompt) {
   const client = getGeminiClient();
   return client.getGenerativeModel({
     model: 'gemini-2.5-pro',
+    systemInstruction: {
+      parts: [{ text: systemPrompt }],
+    },
     generationConfig: {
       temperature: 1,
       thinkingConfig: {

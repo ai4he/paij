@@ -13,8 +13,8 @@ export const sendMessage = async (req, res) => {
     const user = db.prepare('SELECT system_prompt FROM users WHERE id = ?').get(userId);
     const systemPrompt = user?.system_prompt || DEFAULT_SYSTEM_PROMPT;
 
-    // Get the Gemini model
-    const model = getModel();
+    // Get the Gemini model configured with user's system prompt
+    const model = getModel(systemPrompt);
 
     // Build conversation history for Gemini
     const history = messages.slice(0, -1).map((msg) => ({
@@ -23,12 +23,7 @@ export const sendMessage = async (req, res) => {
     }));
 
     // Start chat with history
-    const chat = model.startChat({
-      history,
-      systemInstruction: {
-        parts: [{ text: systemPrompt }],
-      },
-    });
+    const chat = model.startChat({ history });
 
     // Get the latest user message
     const latestMessage = messages[messages.length - 1].content;
