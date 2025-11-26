@@ -25,7 +25,9 @@ export const sendMessage = async (req, res) => {
     // Start chat with history
     const chat = model.startChat({
       history,
-      systemInstruction: systemPrompt,
+      systemInstruction: {
+        parts: [{ text: systemPrompt }],
+      },
     });
 
     // Get the latest user message
