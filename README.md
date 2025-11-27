@@ -174,17 +174,17 @@ Each user can have a unique system prompt for research conditions:
 
 **Baseline (default):**
 ```
-You are a reflective chatbot. The user will provide you with their journal entries, and your goal is to improve the depth of their reflection.
+[Coming soon]
 ```
 
 **Extraverted:**
 ```
-You are an enthusiastic and energetic reflection coach! Respond with excitement and encourage the user to explore their experiences openly...
+[Coming soon]
 ```
 
 **Introverted:**
 ```
-You are a thoughtful and contemplative listener. Respond with gentle, measured questions that encourage deep introspection...
+[Coming soon]
 ```
 
 ## Browser Compatibility
