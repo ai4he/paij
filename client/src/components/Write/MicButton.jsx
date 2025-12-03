@@ -1,15 +1,19 @@
-export function MicButton({ isListening, isSupported, onClick, disabled }) {
+export function MicButton({ isListening, isSupported, onClick, disabled, size = 'normal' }) {
+  const sizeClasses = size === 'small'
+    ? { button: 'p-2', icon: 'h-5 w-5' }
+    : { button: 'p-3', icon: 'h-6 w-6' };
+
   if (!isSupported) {
     return (
       <button
         type="button"
         disabled
-        className="rounded-full bg-gray-100 p-3 text-gray-400 cursor-not-allowed"
+        className={`rounded-full bg-gray-100 text-gray-400 cursor-not-allowed ${sizeClasses.button}`}
         title="Speech-to-text not supported in this browser"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
+          className={sizeClasses.icon}
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -28,7 +32,7 @@ export function MicButton({ isListening, isSupported, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-full p-3 transition-all ${
+      className={`rounded-full transition-all ${sizeClasses.button} ${
         isListening
           ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-200'
           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -39,7 +43,7 @@ export function MicButton({ isListening, isSupported, onClick, disabled }) {
         // Stop icon when recording
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
+          className={sizeClasses.icon}
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -49,7 +53,7 @@ export function MicButton({ isListening, isSupported, onClick, disabled }) {
         // Microphone icon when not recording
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
+          className={sizeClasses.icon}
           viewBox="0 0 20 20"
           fill="currentColor"
         >

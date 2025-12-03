@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Modal } from '../Common/Modal';
 import { ChatMessage, TypingIndicator } from './ChatMessage';
 import { useChat } from '../../hooks/useChat';
+import { useSpeechToText } from '../../hooks/useSpeechToText';
+import { MicButton } from '../Write/MicButton';
 import * as api from '../../services/api';
 
 export function ChatPopup({ isOpen, onClose, entry, userId }) {
@@ -21,6 +23,16 @@ export function ChatPopup({ isOpen, onClose, entry, userId }) {
     reset,
   } = useChat(userId);
 
+  const {
+    isListening,
+    transcript,
+    interimTranscript,
+    isSupported: isSpeechSupported,
+    toggleListening,
+    stopListening,
+    resetTranscript,
+  } = useSpeechToText();
+
   // Start conversation when popup opens with entry
   useEffect(() => {
     if (isOpen && entry) {
@@ -28,6 +40,24 @@ export function ChatPopup({ isOpen, onClose, entry, userId }) {
       startConversation(entry.content);
     }
   }, [isOpen, entry]);
+
+  // Append speech transcript to input
+  useEffect(() => {
+    if (transcript) {
+      setInput((prev) => {
+        const needsSpace = prev.length > 0 && !prev.endsWith(' ');
+        return prev + (needsSpace ? ' ' : '') + transcript;
+      });
+      resetTranscript();
+    }
+  }, [transcript, resetTranscript]);
+
+  // Stop listening when conversation completes, popup closes, or loading
+  useEffect(() => {
+    if (isComplete || !isOpen || isLoading) {
+      stopListening();
+    }
+  }, [isComplete, isOpen, isLoading, stopListening]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -112,16 +142,25 @@ export function ChatPopup({ isOpen, onClose, entry, userId }) {
         <div className="border-t border-gray-200 p-4">
           {!isComplete ? (
             <>
-              <form onSubmit={handleSubmit} className="flex gap-2">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder={isLoading ? 'Waiting for response...' : 'Type your response...'}
+              <form onSubmit={handleSubmit} className="flex gap-2 items-center">
+                <MicButton
+                  isListening={isListening}
+                  isSupported={isSpeechSupported}
+                  onClick={toggleListening}
                   disabled={isLoading}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-50"
+                  size="small"
                 />
+                <div className="flex-1 relative">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={input + (interimTranscript ? (input ? ' ' : '') + interimTranscript : '')}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder={isLoading ? 'Waiting for response...' : isListening ? 'Listening...' : 'Type or speak your response...'}
+                    disabled={isLoading}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-50"
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
