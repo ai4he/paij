@@ -26,6 +26,21 @@ export const getEntries = (req, res) => {
   }
 };
 
+// Transaction to atomically get next entry number and insert entry
+// Prevents race condition when same user creates entries from multiple devices
+const createEntryTransaction = db.transaction((userId, content, entryDate) => {
+  const lastEntry = db.prepare(
+    'SELECT MAX(entry_number) as max_num FROM entries WHERE user_id = ?'
+  ).get(userId);
+  const entryNumber = (lastEntry?.max_num || 0) + 1;
+
+  const result = db.prepare(
+    'INSERT INTO entries (user_id, entry_number, content, entry_date) VALUES (?, ?, ?, ?)'
+  ).run(userId, entryNumber, content, entryDate);
+
+  return db.prepare('SELECT * FROM entries WHERE id = ?').get(result.lastInsertRowid);
+});
+
 export const createEntry = (req, res) => {
   try {
     const { userId, content } = req.body;
@@ -36,17 +51,7 @@ export const createEntry = (req, res) => {
 
     const entryDate = new Date().toISOString().split('T')[0];
 
-    // Get the next entry number for this user
-    const lastEntry = db.prepare(
-      'SELECT MAX(entry_number) as max_num FROM entries WHERE user_id = ?'
-    ).get(userId);
-    const entryNumber = (lastEntry?.max_num || 0) + 1;
-
-    const result = db.prepare(
-      'INSERT INTO entries (user_id, entry_number, content, entry_date) VALUES (?, ?, ?, ?)'
-    ).run(userId, entryNumber, content, entryDate);
-
-    const entry = db.prepare('SELECT * FROM entries WHERE id = ?').get(result.lastInsertRowid);
+    const entry = createEntryTransaction(userId, content, entryDate);
 
     res.status(201).json(entry);
   } catch (error) {

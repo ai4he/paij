@@ -12,6 +12,9 @@ const db = new Database(dbPath);
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
 
+// Enable WAL mode for better concurrent read/write performance
+db.pragma('journal_mode = WAL');
+
 export function initializeDatabase() {
   const schemaPath = join(__dirname, '..', 'database', 'schema.sql');
   const schema = readFileSync(schemaPath, 'utf-8');

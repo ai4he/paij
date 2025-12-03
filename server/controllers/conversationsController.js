@@ -30,6 +30,15 @@ export const saveConversation = (req, res) => {
       return res.status(400).json({ message: 'Entry ID, user ID, and messages required' });
     }
 
+    // Verify the entry belongs to the user before saving conversation
+    const entry = db.prepare(
+      'SELECT id FROM entries WHERE id = ? AND user_id = ?'
+    ).get(entryId, userId);
+
+    if (!entry) {
+      return res.status(403).json({ message: 'Entry not found or access denied' });
+    }
+
     const result = db.prepare(
       'INSERT INTO conversations (entry_id, user_id, messages) VALUES (?, ?, ?)'
     ).run(entryId, userId, JSON.stringify(messages));
