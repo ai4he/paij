@@ -53,7 +53,7 @@ export function HistoryTab() {
   const handleViewConversation = async (entryId) => {
     setConversationLoading(true);
     try {
-      const conversation = await getConversation(entryId);
+      const conversation = await getConversation(entryId, user.id);
       setSelectedConversation(conversation);
     } catch (err) {
       if (err.message.includes('not found')) {
