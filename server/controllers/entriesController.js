@@ -36,9 +36,15 @@ export const createEntry = (req, res) => {
 
     const entryDate = new Date().toISOString().split('T')[0];
 
+    // Get the next entry number for this user
+    const lastEntry = db.prepare(
+      'SELECT MAX(entry_number) as max_num FROM entries WHERE user_id = ?'
+    ).get(userId);
+    const entryNumber = (lastEntry?.max_num || 0) + 1;
+
     const result = db.prepare(
-      'INSERT INTO entries (user_id, content, entry_date) VALUES (?, ?, ?)'
-    ).run(userId, content, entryDate);
+      'INSERT INTO entries (user_id, entry_number, content, entry_date) VALUES (?, ?, ?, ?)'
+    ).run(userId, entryNumber, content, entryDate);
 
     const entry = db.prepare('SELECT * FROM entries WHERE id = ?').get(result.lastInsertRowid);
 

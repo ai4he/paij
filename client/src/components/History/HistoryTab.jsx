@@ -111,9 +111,14 @@ export function HistoryTab() {
               className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
             >
               <div className="mb-2 flex items-center justify-between">
-                <span className="font-medium text-gray-900">
-                  {formatDate(entry.entry_date)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700">
+                    Entry #{entry.entry_number}
+                  </span>
+                  <span className="font-medium text-gray-900">
+                    {formatDate(entry.entry_date)}
+                  </span>
+                </div>
                 <span className="text-sm text-gray-500">
                   {formatTime(entry.entry_timestamp)}
                 </span>

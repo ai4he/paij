@@ -59,7 +59,7 @@ export const getEntries = (req, res) => {
 
     const placeholders = ids.map(() => '?').join(',');
     const entries = db.prepare(`
-      SELECT e.id, e.user_id, e.content, e.entry_timestamp as created_at, u.pin
+      SELECT e.id, e.user_id, e.entry_number, e.content, e.entry_timestamp as created_at, u.pin
       FROM entries e
       JOIN users u ON e.user_id = u.id
       WHERE e.user_id IN (${placeholders})

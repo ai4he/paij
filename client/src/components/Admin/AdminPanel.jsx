@@ -487,8 +487,8 @@ export function AdminPanel() {
                         <span className="font-mono text-sm font-medium text-gray-900">
                           PIN: {entry.pin}
                         </span>
-                        <span className="text-xs text-gray-400">
-                          Entry #{entry.id}
+                        <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700">
+                          Entry #{entry.entry_number}
                         </span>
                         <span className="text-xs text-gray-400">
                           {formatDate(entry.created_at)}
