@@ -39,10 +39,10 @@ export const createEntry = (userId, content) => request('/entries', {
   body: JSON.stringify({ userId, content }),
 });
 
-export const getEntry = (id) => request(`/entries/${id}`);
+export const getEntry = (id, userId) => request(`/entries/${id}?userId=${userId}`);
 
 // Conversations
-export const getConversation = (entryId) => request(`/conversations/${entryId}`);
+export const getConversation = (entryId, userId) => request(`/conversations/${entryId}?userId=${userId}`);
 
 export const saveConversation = (entryId, userId, messages) => request('/conversations', {
   method: 'POST',
