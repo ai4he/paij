@@ -47,24 +47,34 @@ export const getEntries = (req, res) => {
   try {
     const { userIds } = req.query;
 
+    console.log('getEntries called with userIds:', userIds);
+
     if (!userIds) {
       return res.status(400).json({ message: 'User IDs required' });
     }
 
     const ids = userIds.split(',').map(id => parseInt(id, 10)).filter(id => !isNaN(id));
 
+    console.log('Parsed IDs:', ids);
+
     if (ids.length === 0) {
       return res.status(400).json({ message: 'Valid user IDs required' });
     }
 
     const placeholders = ids.map(() => '?').join(',');
-    const entries = db.prepare(`
+    const query = `
       SELECT e.id, e.user_id, e.content, e.created_at, u.pin
       FROM entries e
       JOIN users u ON e.user_id = u.id
       WHERE e.user_id IN (${placeholders})
       ORDER BY e.created_at DESC
-    `).all(...ids);
+    `;
+
+    console.log('Executing query:', query);
+
+    const entries = db.prepare(query).all(...ids);
+
+    console.log('Found entries:', entries.length);
 
     res.json(entries);
   } catch (error) {
