@@ -42,3 +42,78 @@ export const updatePrompts = (req, res) => {
     res.status(500).json({ message: 'Failed to update prompts' });
   }
 };
+
+export const getEntries = (req, res) => {
+  try {
+    const { userIds } = req.query;
+
+    if (!userIds) {
+      return res.status(400).json({ message: 'User IDs required' });
+    }
+
+    const ids = userIds.split(',').map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+
+    if (ids.length === 0) {
+      return res.status(400).json({ message: 'Valid user IDs required' });
+    }
+
+    const placeholders = ids.map(() => '?').join(',');
+    const entries = db.prepare(`
+      SELECT e.id, e.user_id, e.content, e.created_at, u.pin
+      FROM entries e
+      JOIN users u ON e.user_id = u.id
+      WHERE e.user_id IN (${placeholders})
+      ORDER BY e.created_at DESC
+    `).all(...ids);
+
+    res.json(entries);
+  } catch (error) {
+    console.error('Get entries error:', error);
+    res.status(500).json({ message: 'Failed to fetch entries' });
+  }
+};
+
+export const deleteEntries = (req, res) => {
+  try {
+    const { entryIds, userIds, deleteAll } = req.body;
+
+    let deletedCount = 0;
+
+    if (deleteAll && userIds && Array.isArray(userIds) && userIds.length > 0) {
+      // Delete all entries for specified users
+      const deleteConversations = db.prepare('DELETE FROM conversations WHERE entry_id IN (SELECT id FROM entries WHERE user_id = ?)');
+      const deleteUserEntries = db.prepare('DELETE FROM entries WHERE user_id = ?');
+
+      const deleteAllForUsers = db.transaction((ids) => {
+        for (const id of ids) {
+          deleteConversations.run(id);
+          const result = deleteUserEntries.run(id);
+          deletedCount += result.changes;
+        }
+      });
+
+      deleteAllForUsers(userIds);
+    } else if (entryIds && Array.isArray(entryIds) && entryIds.length > 0) {
+      // Delete specific entries
+      const deleteConversation = db.prepare('DELETE FROM conversations WHERE entry_id = ?');
+      const deleteEntry = db.prepare('DELETE FROM entries WHERE id = ?');
+
+      const deleteSpecific = db.transaction((ids) => {
+        for (const id of ids) {
+          deleteConversation.run(id);
+          const result = deleteEntry.run(id);
+          deletedCount += result.changes;
+        }
+      });
+
+      deleteSpecific(entryIds);
+    } else {
+      return res.status(400).json({ message: 'Entry IDs or user IDs with deleteAll flag required' });
+    }
+
+    res.json({ message: `Deleted ${deletedCount} entry(ies)`, deletedCount });
+  } catch (error) {
+    console.error('Delete entries error:', error);
+    res.status(500).json({ message: 'Failed to delete entries' });
+  }
+};

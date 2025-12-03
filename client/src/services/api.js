@@ -65,3 +65,13 @@ export const updatePrompts = (adminKey, userIds, systemPrompt) => request('/admi
   headers: { 'X-Admin-Key': adminKey },
   body: JSON.stringify({ userIds, systemPrompt }),
 });
+
+export const getAdminEntries = (adminKey, userIds) => request(`/admin/entries?userIds=${userIds.join(',')}`, {
+  headers: { 'X-Admin-Key': adminKey },
+});
+
+export const deleteAdminEntries = (adminKey, { entryIds, userIds, deleteAll }) => request('/admin/entries', {
+  method: 'DELETE',
+  headers: { 'X-Admin-Key': adminKey },
+  body: JSON.stringify({ entryIds, userIds, deleteAll }),
+});

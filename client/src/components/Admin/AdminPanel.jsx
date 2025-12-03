@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { getAdminUsers, updatePrompts } from '../../services/api';
+import { useState } from 'react';
+import { getAdminUsers, updatePrompts, getAdminEntries, deleteAdminEntries } from '../../services/api';
 
 export function AdminPanel() {
   const [adminKey, setAdminKey] = useState('');
@@ -10,6 +10,12 @@ export function AdminPanel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Entry management state
+  const [entries, setEntries] = useState([]);
+  const [selectedEntries, setSelectedEntries] = useState([]);
+  const [entriesLoading, setEntriesLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null); // 'all' | 'selected' | null
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -35,6 +41,8 @@ export function AdminPanel() {
     setUsers([]);
     setSelectedUsers([]);
     setNewPrompt('');
+    setEntries([]);
+    setSelectedEntries([]);
   };
 
   const handleSelectAll = () => {
@@ -81,6 +89,104 @@ export function AdminPanel() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoadEntries = async () => {
+    if (selectedUsers.length === 0) {
+      setError('Please select at least one user');
+      return;
+    }
+
+    setEntriesLoading(true);
+    setError('');
+    setEntries([]);
+    setSelectedEntries([]);
+
+    try {
+      const data = await getAdminEntries(adminKey, selectedUsers);
+      setEntries(data);
+      if (data.length === 0) {
+        setSuccess('No entries found for selected users');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to fetch entries');
+    } finally {
+      setEntriesLoading(false);
+    }
+  };
+
+  const handleSelectEntry = (entryId) => {
+    setSelectedEntries((prev) =>
+      prev.includes(entryId)
+        ? prev.filter((id) => id !== entryId)
+        : [...prev, entryId]
+    );
+  };
+
+  const handleSelectAllEntries = () => {
+    if (selectedEntries.length === entries.length) {
+      setSelectedEntries([]);
+    } else {
+      setSelectedEntries(entries.map((e) => e.id));
+    }
+  };
+
+  const handleDeleteAllEntries = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await deleteAdminEntries(adminKey, {
+        userIds: selectedUsers,
+        deleteAll: true,
+      });
+      setSuccess(result.message);
+      setEntries([]);
+      setSelectedEntries([]);
+      setShowDeleteConfirm(null);
+    } catch (err) {
+      setError(err.message || 'Failed to delete entries');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSelectedEntries = async () => {
+    if (selectedEntries.length === 0) {
+      setError('Please select at least one entry');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await deleteAdminEntries(adminKey, {
+        entryIds: selectedEntries,
+      });
+      setSuccess(result.message);
+      setEntries((prev) => prev.filter((e) => !selectedEntries.includes(e.id)));
+      setSelectedEntries([]);
+      setShowDeleteConfirm(null);
+    } catch (err) {
+      setError(err.message || 'Failed to delete entries');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (timestamp) => {
+    const utcTimestamp = timestamp.replace(' ', 'T') + 'Z';
+    const date = new Date(utcTimestamp);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   };
 
   const selectedUsersPrompts = users
@@ -157,8 +263,16 @@ export function AdminPanel() {
             <p className="text-2xl font-bold text-gray-900">{users.length}</p>
           </div>
           <div className="rounded-lg bg-white p-4 shadow-sm">
-            <p className="text-sm text-gray-500">Selected</p>
+            <p className="text-sm text-gray-500">Selected Users</p>
             <p className="text-2xl font-bold text-primary-600">{selectedUsers.length}</p>
+          </div>
+          <div className="rounded-lg bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">Loaded Entries</p>
+            <p className="text-2xl font-bold text-gray-900">{entries.length}</p>
+          </div>
+          <div className="rounded-lg bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">Selected Entries</p>
+            <p className="text-2xl font-bold text-red-600">{selectedEntries.length}</p>
           </div>
         </div>
 
@@ -171,6 +285,38 @@ export function AdminPanel() {
         {success && (
           <div className="mb-4 rounded-md bg-green-50 p-4 text-green-600">
             {success}
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+              <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                Confirm Deletion
+              </h3>
+              <p className="mb-4 text-gray-600">
+                {showDeleteConfirm === 'all'
+                  ? `Are you sure you want to delete ALL entries for ${selectedUsers.length} selected user(s)? This action cannot be undone.`
+                  : `Are you sure you want to delete ${selectedEntries.length} selected entry(ies)? This action cannot be undone.`}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  disabled={loading}
+                  className="flex-1 rounded-md border border-gray-300 py-2 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={showDeleteConfirm === 'all' ? handleDeleteAllEntries : handleDeleteSelectedEntries}
+                  disabled={loading}
+                  className="flex-1 rounded-md bg-red-600 py-2 font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {loading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -263,6 +409,100 @@ export function AdminPanel() {
                 : `Update ${selectedUsers.length} User${selectedUsers.length !== 1 ? 's' : ''}`}
             </button>
           </div>
+        </div>
+
+        {/* Entry Management Section */}
+        <div className="mt-8 rounded-lg bg-white p-6 shadow-sm">
+          <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Entry Management
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handleLoadEntries}
+                disabled={entriesLoading || selectedUsers.length === 0}
+                className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {entriesLoading ? 'Loading...' : 'Load Entries for Selected Users'}
+              </button>
+              {entries.length > 0 && (
+                <>
+                  <button
+                    onClick={() => setShowDeleteConfirm('selected')}
+                    disabled={loading || selectedEntries.length === 0}
+                    className="rounded-md bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Delete Selected ({selectedEntries.length})
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm('all')}
+                    disabled={loading}
+                    className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    Delete All for Users
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {entries.length === 0 ? (
+            <div className="rounded-md bg-gray-50 p-8 text-center text-gray-500">
+              {selectedUsers.length === 0
+                ? 'Select users above, then click "Load Entries" to view their entries'
+                : 'Click "Load Entries for Selected Users" to view entries'}
+            </div>
+          ) : (
+            <>
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm text-gray-500">
+                  Showing {entries.length} entries from {selectedUsers.length} user(s)
+                </p>
+                <button
+                  onClick={handleSelectAllEntries}
+                  className="text-sm text-primary-600 hover:text-primary-700"
+                >
+                  {selectedEntries.length === entries.length ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+
+              <div className="max-h-[400px] overflow-y-auto space-y-2">
+                {entries.map((entry) => (
+                  <label
+                    key={entry.id}
+                    className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                      selectedEntries.includes(entry.id)
+                        ? 'border-red-400 bg-red-50'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedEntries.includes(entry.id)}
+                      onChange={() => handleSelectEntry(entry.id)}
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-sm font-medium text-gray-900">
+                          PIN: {entry.pin}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          Entry #{entry.id}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {formatDate(entry.created_at)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+                        {entry.content}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>
