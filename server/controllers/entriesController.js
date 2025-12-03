@@ -43,13 +43,19 @@ const createEntryTransaction = db.transaction((userId, content, entryDate) => {
 
 export const createEntry = (req, res) => {
   try {
-    const { userId, content } = req.body;
+    const { userId, content, entryDate: clientDate } = req.body;
 
     if (!userId || !content) {
       return res.status(400).json({ message: 'User ID and content required' });
     }
 
-    const entryDate = new Date().toISOString().split('T')[0];
+    // Use client-provided date if valid, otherwise fall back to UTC date
+    let entryDate;
+    if (clientDate && /^\d{4}-\d{2}-\d{2}$/.test(clientDate)) {
+      entryDate = clientDate;
+    } else {
+      entryDate = new Date().toISOString().split('T')[0];
+    }
 
     const entry = createEntryTransaction(userId, content, entryDate);
 

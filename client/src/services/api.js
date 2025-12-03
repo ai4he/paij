@@ -34,10 +34,14 @@ export const getEntries = (userId, date = null) => {
   return request(`/entries?${params}`);
 };
 
-export const createEntry = (userId, content) => request('/entries', {
-  method: 'POST',
-  body: JSON.stringify({ userId, content }),
-});
+export const createEntry = (userId, content) => {
+  // Send local date to ensure entry is dated correctly for user's timezone
+  const localDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  return request('/entries', {
+    method: 'POST',
+    body: JSON.stringify({ userId, content, entryDate: localDate }),
+  });
+};
 
 export const getEntry = (id, userId) => request(`/entries/${id}?userId=${userId}`);
 
