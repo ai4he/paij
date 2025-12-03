@@ -63,11 +63,11 @@ export const getEntries = (req, res) => {
 
     const placeholders = ids.map(() => '?').join(',');
     const query = `
-      SELECT e.id, e.user_id, e.content, e.created_at, u.pin
+      SELECT e.id, e.user_id, e.content, e.entry_timestamp as created_at, u.pin
       FROM entries e
       JOIN users u ON e.user_id = u.id
       WHERE e.user_id IN (${placeholders})
-      ORDER BY e.created_at DESC
+      ORDER BY e.entry_timestamp DESC
     `;
 
     console.log('Executing query:', query);
