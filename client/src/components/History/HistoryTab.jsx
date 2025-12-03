@@ -29,13 +29,16 @@ export function HistoryTab() {
   };
 
   const formatDate = (dateStr) => {
-    // Parse the date string and display in local timezone
-    const date = new Date(dateStr + 'T00:00:00');
+    // entry_date is stored as UTC date (YYYY-MM-DD)
+    // Parse as UTC and display as UTC to avoid timezone shift
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      timeZone: 'UTC',
     });
   };
 
