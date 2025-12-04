@@ -1,6 +1,6 @@
 # AI-Assisted Journaling Webapp
 
-A research-focused journaling application designed to study how *[coming soon]* affects users' journal entries.
+A research-focused journaling application designed to study how **[coming soon]** affects users' journal entries.
 
 ## Features
 
