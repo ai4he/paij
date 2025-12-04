@@ -1,6 +1,6 @@
 # AI-Assisted Journaling Webapp
 
-A research-focused journaling application designed to study how different AI personality types (extraverted, introverted, baseline) affect the depth of personal reflection in users' journal entries.
+A research-focused journaling application designed to study how different AI personality types affect users' journal entries.
 
 ## Features
 
