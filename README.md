@@ -1,6 +1,6 @@
 # AI-Assisted Journaling Webapp
 
-A research-focused journaling application designed to study how different AI personality types affect users' journal entries.
+A research-focused journaling application designed to study how different [coming soon] types affect users' journal entries.
 
 ## Features
 
@@ -173,16 +173,6 @@ CREATE TABLE conversations (
 Each user can have a unique system prompt for research conditions:
 
 **Baseline (default):**
-```
-[Coming soon]
-```
-
-**Extraverted:**
-```
-[Coming soon]
-```
-
-**Introverted:**
 ```
 [Coming soon]
 ```
